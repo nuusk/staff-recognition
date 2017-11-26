@@ -1,4 +1,5 @@
 const cv = require('opencv');
+require('console.table');
 
 const frameRate = 400;
 const lowThresh = 40;
@@ -18,12 +19,13 @@ var WHITE = [255, 255, 255];
 let contours;
 let adaptiveBlockSize = 13;
 let adaptiveConstant = 2;
-let verticalKernelReduction = 25;
+let verticalKernelReduction = 195;
+let kernelWidth = 4;
 
   //const camera = new cv.VideoCapture(0);
   const window = new cv.NamedWindow('Video', 0)
 setInterval( () => {
-  cv.readImage('./../examples/files/note.png', (err, frame) => {
+  cv.readImage('img/doramon.jpg', (err, frame) => {
     if (err) {
       throw err;
     }
@@ -89,15 +91,19 @@ setInterval( () => {
 
       //determine how big the kernel will be according to the width of the image
       let kernelSize = outSheet.size()[0] / verticalKernelReduction;
+      console.log(kernelSize);
 
       //create kernel with height of 1 and width of a given kernelSize
-      let kernel = cv.imgproc.getStructuringElement(1, [1, kernelSize]);
+      let kernel = cv.imgproc.getStructuringElement(1, [1, kernelWidth]);
+      //console.table(kernel);
+
 
       //morphological operations with created kernel
       outSheet.erode(1, kernel);
-      outSheet.dilate(2, kernel);
+      outSheet.dilate(1, kernel);
       outSheet.erode(1, kernel);
       outSheet.dilate(1, kernel);
+
 
       //inverse the output so that notes are black and the paper is white
       outSheet.bitwiseNot(outSheet);
