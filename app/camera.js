@@ -20,14 +20,14 @@ let contours;
 let adaptiveBlockSize = 13;
 let adaptiveConstant = 2;
 let verticalKernelReduction = 195;
-let staffKernelWidth = 4;
+let staffKernelWidth = 7;
 let barKernelHeight = 5;
 
 //const camera = new cv.VideoCapture(0);
 const window = new cv.NamedWindow('Video', 0)
 
 //setInterval( () => {
-  cv.readImage('img/note.png', (err, frame) => {
+  cv.readImage('img/test3.png', (err, frame) => {
     let points;
     if (err) {
       throw err;
@@ -67,7 +67,6 @@ const window = new cv.NamedWindow('Video', 0)
         frame.line([points[2].x,points[2].y], [points[3].x, points[3].y], RED);
         frame.line([points[3].x,points[3].y], [points[0].x, points[0].y], RED);
         //frame.cv.circle();
-        console.log(points[0]);
 
         //window.show(frame);
       }
@@ -104,7 +103,7 @@ const window = new cv.NamedWindow('Video', 0)
 
       let barKernel = cv.imgproc.getStructuringElement(1, [barKernelHeight, 1]);
 
-      console.log(barKernel);
+      //console.log(barKernel.col(1));
 
 
       outSheet.erode(1, barKernel);
@@ -115,26 +114,33 @@ const window = new cv.NamedWindow('Video', 0)
       //inverse the output so that notes are black and the paper is white
       outSheet.bitwiseNot(outSheet);
 
+    /*  cv::ellipse(self->mat, cv::Point(x, y), cv::Size(width, height), angle,
+      startAngle, endAngle, color, thickness, lineType, shift);
+      cv::line(self->mat, cv::Point(x1, y1), cv::Point(x2, y2), color, thickness); */
+
+
       outNotes = outSheet.clone();
+      let notesKernel = cv.imgproc.getStructuringElement(1, [5, 5]);
+      //console.log(notesKernel);
 
-      let notesKernel = cv.imgproc.getStructuringElement(1, [6, 6]);
-
-      //outNotes.canny(0, 100);
+      outNotes.canny(0, 100);
       outNotes.dilate(1, notesKernel);
       outNotes.erode(1, notesKernel);
-      window.show(outNotes);
+      //window.show(outNotes);
 
       var notesContours = outNotes.findContours();
       const lineType = 8;
-      const maxLevel = 0;
-      const thickness = 1;
+      const maxLevel = 2;
+      const thickness = 2;
       let big = new cv.Matrix(outNotes.size()[0], outNotes.size()[1]);
       for(i = 0; i < notesContours.size(); i++) {
-        if(notesContours.area(i) > 165) {
-          let moments = contours.moments(i);
+        if(notesContours.area(i) > 235 && notesContours.area(i) < 300) {
+          //WE NEED TO FIND VALUES INSTEAD OF 235 AND 300!!!!!!!!
+          
+          let moments = notesContours.moments(i);
           let cgx = Math.round(moments.m10 / moments.m00);
           let cgy = Math.round(moments.m01 / moments.m00);
-          big.drawContour(contours, i, GREEN, thickness, lineType, maxLevel, [0, 0]);
+          big.drawContour(notesContours, i, GREEN, thickness, lineType, maxLevel, [0, 0]);
           big.line([cgx - 5, cgy], [cgx + 5, cgy], RED);
           big.line([cgx, cgy - 5], [cgx, cgy + 5], RED);
         }
@@ -142,8 +148,7 @@ const window = new cv.NamedWindow('Video', 0)
 
       //console.log(outSheet.col(1));
 
-
-      //window.show(big);
+      window.show(big);
 
     window.blockingWaitKey(0, 522000);
   });
