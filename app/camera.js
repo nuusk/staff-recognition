@@ -22,7 +22,7 @@ let adaptiveConstant = 0;
   //const camera = new cv.VideoCapture(0);
   const window = new cv.NamedWindow('Video', 0)
 setInterval( () => {
-  cv.readImage('./examples/files/note.png', (err, frame) => {
+  cv.readImage('../examples/files/note.png', (err, frame) => {
     if (err) {
       throw err;
     }
@@ -98,7 +98,7 @@ setInterval( () => {
       vertical.gaussianBlur([3, 3]);
 
       // Save output image
-      vertical.save('./tmp/note.png');*/
+      vertical.save('../tmp/note.png');*/
 
       window.show(vertical);
 
