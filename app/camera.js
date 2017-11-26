@@ -16,13 +16,14 @@ var GREEN = [0, 255, 0];
 var WHITE = [255, 255, 255];
 
 let contours;
-let adaptiveBlockSize = 15;
-let adaptiveConstant = 0;
+let adaptiveBlockSize = 13;
+let adaptiveConstant = 2;
+let verticalKernelReduction = 25;
 
   //const camera = new cv.VideoCapture(0);
   const window = new cv.NamedWindow('Video', 0)
 setInterval( () => {
-  cv.readImage('../examples/files/note.png', (err, frame) => {
+  cv.readImage('./../examples/files/note.png', (err, frame) => {
     if (err) {
       throw err;
     }
@@ -80,27 +81,31 @@ setInterval( () => {
       //third argument - 0 - THRESH_BINARY
       //fourth argument is the area around pixel that we're comparing against
       //the last argument is a value that is subtracted from the mean of every pixel
-      var bw = frame.adaptiveThreshold(255, 0, 1, adaptiveBlockSize, adaptiveConstant);
-      adaptiveConstant ++;
+      let bw = frame.adaptiveThreshold(255, 0, 1, adaptiveBlockSize, adaptiveConstant);
       //bw.bitwiseNot(bw);
 
-      var vertical = bw.clone();
+      //clone the image that will be processed as an output
+      let outSheet = bw.clone();
 
-      var verticalsize = vertical.size()[0] / 30;
-      console.log(adaptiveConstant);
-      /*var verticalStructure = cv.imgproc.getStructuringElement(1, [1, verticalsize]);
+      //determine how big the kernel will be according to the width of the image
+      let kernelSize = outSheet.size()[0] / verticalKernelReduction;
 
-      // Apply morphology operations
-      vertical.erode(1, verticalStructure);
-      vertical.dilate(1, verticalStructure);
+      //create kernel with height of 1 and width of a given kernelSize
+      let kernel = cv.imgproc.getStructuringElement(1, [1, kernelSize]);
 
-      vertical.bitwiseNot(vertical);
-      vertical.gaussianBlur([3, 3]);
+      //morphological operations with created kernel
+      outSheet.erode(1, kernel);
+      outSheet.dilate(2, kernel);
+      outSheet.erode(1, kernel);
+      outSheet.dilate(1, kernel);
+
+      //inverse the output so that notes are black and the paper is white
+      outSheet.bitwiseNot(outSheet);
 
       // Save output image
-      vertical.save('../tmp/note.png');*/
+      //vertical.save('../tmp/note.png');*/
 
-      window.show(vertical);
+      window.show(outSheet);
 
     window.blockingWaitKey(0, 50);
   });
