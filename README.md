@@ -8,7 +8,6 @@
     opencv implementation for javascript
   </li>
   <li>
-    <strong><a href="chartjs">chartjs</a></strong>
-    + chartjs-node
+    
   </li>
 </ul>

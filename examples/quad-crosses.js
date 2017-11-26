@@ -27,7 +27,7 @@ cv.readImage('./files/quads.jpg', function(err, im) {
   contours = im_canny.findContours();
 
   for (i = 0; i < contours.size(); i++) {
-
+    
     var area = contours.area(i);
     if (area < minArea || area > maxArea) continue;
 

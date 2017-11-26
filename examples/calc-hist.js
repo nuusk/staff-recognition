@@ -1,4 +1,5 @@
 var cv = require('opencv');
+var ChartjsNode = require('chartjs-node');
 
 // (B)lue, (G)reen, (R)ed
 var histSize = 256;
@@ -26,8 +27,8 @@ cv.readImage('./files/car1.jpg', function(err, im) {
 //////
 //  Uncommentand run `npm install chartjs-node` to draw the histogram !
 ///
-/*
-  var ChartjsNode = require('chartjs-node');
+
+
   var chartNode = new ChartjsNode(1200, 1200);
   chartNode.drawChart({
       type: 'bar',
@@ -63,5 +64,5 @@ cv.readImage('./files/car1.jpg', function(err, im) {
   }).catch(function(e){
     console.log("error",e)
   });
-*/
+
 });
