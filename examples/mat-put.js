@@ -1,4 +1,4 @@
-var opencv = require('../lib/opencv');
+var opencv = require('opencv');
 var mat = new opencv.Matrix(256,256,opencv.Constants.CV_8UC1);
 var buf = Buffer(256*256);
 buf.fill(0);

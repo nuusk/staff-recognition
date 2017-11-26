@@ -1,7 +1,7 @@
 // Face recognition proxy
 var http = require('http'),
     request = require('request'),
-    cv = require('../lib/opencv');
+    cv = require('opencv');
 
 var server = http.createServer(function(req, resp){
   var url = req.url.slice(1);

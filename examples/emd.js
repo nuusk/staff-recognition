@@ -1,4 +1,4 @@
-var cv = require('../lib/opencv');
+var cv = require('opencv');
 
 //
 //  Example of use of EMD distance using histograms

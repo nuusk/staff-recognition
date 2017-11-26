@@ -1,4 +1,4 @@
-var cv = require('../lib/opencv');
+var cv = require('opencv');
 
 // Load the image
 cv.readImage('./files/note.png', function(err, im) {

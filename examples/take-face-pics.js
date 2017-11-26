@@ -1,4 +1,4 @@
-var cv = require('../lib/opencv');
+var cv = require('opencv');
 try {
   var vid = new cv.VideoCapture(0);
 

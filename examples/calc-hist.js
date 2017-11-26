@@ -1,4 +1,4 @@
-var cv = require('../lib/opencv');
+var cv = require('opencv');
 
 // (B)lue, (G)reen, (R)ed
 var histSize = 256;

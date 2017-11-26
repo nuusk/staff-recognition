@@ -1,5 +1,5 @@
 // Finds quadrilaterals and fills them with an X
-var cv = require('../lib/opencv');
+var cv = require('opencv');
 
 var lowThresh = 0;
 var highThresh = 100;

@@ -1,4 +1,4 @@
-var cv = require('../lib/opencv');
+var cv = require('opencv');
 var path = require('path');
 
 var cap = new cv.VideoCapture(path.join(__dirname, 'files', 'motion.mov'));

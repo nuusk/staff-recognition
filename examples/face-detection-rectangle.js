@@ -1,4 +1,4 @@
-var cv = require('../lib/opencv');
+var cv = require('opencv');
 
 var COLOR = [0, 255, 0]; // default red
 var thickness = 2; // default 1

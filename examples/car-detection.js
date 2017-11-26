@@ -1,7 +1,7 @@
 /* For some reason the cascade file is broken on linux :(
 
 
-var cv = require('../lib/opencv');
+var cv = require('opencv');
 
 cv.readImage("./files/car1.jpg", function(err, im){
   if (err) throw err;

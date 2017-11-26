@@ -1,4 +1,4 @@
-var cv = require('../lib/opencv');
+var cv = require('opencv');
 
 if (cv.ImageSimilarity === undefined) {
   console.log('TODO: Please port Features2d.cc to OpenCV 3')

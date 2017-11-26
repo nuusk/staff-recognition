@@ -1,5 +1,5 @@
 var path = require('path'),
-    cv = require('../lib/opencv');
+    cv = require('opencv');
 
 var bg = null;
 

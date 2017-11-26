@@ -1,4 +1,4 @@
-var cv = require('../lib/opencv');
+var cv = require('opencv');
 cv.readImage("./examples/files/mona.png", function(err, orig) {
   /*
   if (err) throw err;

@@ -1,5 +1,5 @@
 /*
-var cv = require('../lib/opencv');
+var cv = require('opencv');
 
 cv.readImage("./files/mona.png", function(err, im) {
   salt(im, 100);
