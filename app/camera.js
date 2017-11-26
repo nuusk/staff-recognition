@@ -1,14 +1,14 @@
 const cv = require('opencv');
 require('console.table');
 
-const frameRate = 400;
+const frameRate = 20;
 const lowThresh = 40;
 const highThresh = 60;
 const nDilIters = 2;
 const nErodIters = 2;
 
 const minArea = 2000;
-const maxArea = 100000;
+const maxArea = 10000000000;
 
 //colors (B, G, R)!!!
 var BLUE = [0, 255, 0];
@@ -20,12 +20,15 @@ let contours;
 let adaptiveBlockSize = 13;
 let adaptiveConstant = 2;
 let verticalKernelReduction = 195;
-let kernelWidth = 4;
+let staffKernelWidth = 4;
+let barKernelHeight = 5;
 
-  //const camera = new cv.VideoCapture(0);
-  const window = new cv.NamedWindow('Video', 0)
-setInterval( () => {
-  cv.readImage('img/doramon.jpg', (err, frame) => {
+//const camera = new cv.VideoCapture(0);
+const window = new cv.NamedWindow('Video', 0)
+
+//setInterval( () => {
+  cv.readImage('img/note.png', (err, frame) => {
+    let points;
     if (err) {
       throw err;
     }
@@ -33,46 +36,42 @@ setInterval( () => {
       throw new Error('Image has no size');
     }
 
-/*setInterval( () => {
-  camera.read((err, frame) => {
-    if (err) throw err;
+      var outEdges = frame.clone();
 
-    if (frame.size()[0] > 0 && frame.size()[1] > 0){
-/*
-      var out = frame.copy();
+      outEdges.convertGrayscale();
+      outEdges.gaussianBlur([9, 9]);
+      outEdges.canny(lowThresh, highThresh);
+      outEdges.dilate(nDilIters);
+      outEdges.erode(nErodIters);
 
-      out.convertGrayscale();
-      out.gaussianBlur([9, 9]);
-      out.canny(lowThresh, highThresh);
-      out.dilate(nDilIters);
-      out.erode(nErodIters);
-
-
-      contours = out.findContours();
+      contours = outEdges.findContours();
 
       for (i = 0; i < contours.size(); i++) {
 
         let area = contours.area(i);
-
         if (area < minArea || area > maxArea) continue;
 
         let arcLength = contours.arcLength(i, true);
         contours.approxPolyDP(i, 0.01 * arcLength, true);
 
         if (contours.cornerCount(i) != 4) continue;
-        //console.log('asd');
 
-        let points = [
+        points = [
           contours.point(i, 0),
           contours.point(i, 1),
           contours.point(i, 2),
           contours.point(i, 3)
         ]
+        frame.line([points[0].x,points[0].y], [points[1].x, points[1].y], RED);
+        frame.line([points[1].x,points[1].y], [points[2].x, points[2].y], RED);
+        frame.line([points[2].x,points[2].y], [points[3].x, points[3].y], RED);
+        frame.line([points[3].x,points[3].y], [points[0].x, points[0].y], RED);
+        //frame.cv.circle();
+        console.log(points[0]);
 
-        frame.line([points[0].x,points[0].y], [points[2].x, points[2].y], RED);
-        frame.line([points[1].x,points[1].y], [points[3].x, points[3].y], RED);
+        //window.show(frame);
       }
-      */
+
 
       //we need single channel image to apply threshhold
       frame.cvtColor('CV_BGR2GRAY');
@@ -89,30 +88,63 @@ setInterval( () => {
       //clone the image that will be processed as an output
       let outSheet = bw.clone();
 
+      // !!! currently not used
       //determine how big the kernel will be according to the width of the image
-      let kernelSize = outSheet.size()[0] / verticalKernelReduction;
-      console.log(kernelSize);
+      //let kernelSize = outSheet.size()[0] / verticalKernelReduction;
+      //console.log(kernelSize);
 
       //create kernel with height of 1 and width of a given kernelSize
-      let kernel = cv.imgproc.getStructuringElement(1, [1, kernelWidth]);
-      //console.table(kernel);
-
+      let staffKernel = cv.imgproc.getStructuringElement(1, [1, staffKernelWidth]);
 
       //morphological operations with created kernel
-      outSheet.erode(1, kernel);
-      outSheet.dilate(1, kernel);
-      outSheet.erode(1, kernel);
-      outSheet.dilate(1, kernel);
+      outSheet.erode(1, staffKernel);
+      outSheet.dilate(1, staffKernel);
+      //outSheet.erode(1, staffKernel);
+      //outSheet.dilate(1, staffKernel);
 
+      let barKernel = cv.imgproc.getStructuringElement(1, [barKernelHeight, 1]);
+
+      console.log(barKernel);
+
+
+      outSheet.erode(1, barKernel);
+      outSheet.dilate(1, barKernel);
+      outSheet.erode(1, barKernel);
+      outSheet.dilate(1, barKernel);
 
       //inverse the output so that notes are black and the paper is white
       outSheet.bitwiseNot(outSheet);
 
-      // Save output image
-      //vertical.save('../tmp/note.png');*/
+      outNotes = outSheet.clone();
 
-      window.show(outSheet);
+      let notesKernel = cv.imgproc.getStructuringElement(1, [6, 6]);
 
-    window.blockingWaitKey(0, 50);
+      //outNotes.canny(0, 100);
+      outNotes.dilate(1, notesKernel);
+      outNotes.erode(1, notesKernel);
+      window.show(outNotes);
+
+      var notesContours = outNotes.findContours();
+      const lineType = 8;
+      const maxLevel = 0;
+      const thickness = 1;
+      let big = new cv.Matrix(outNotes.size()[0], outNotes.size()[1]);
+      for(i = 0; i < notesContours.size(); i++) {
+        if(notesContours.area(i) > 165) {
+          let moments = contours.moments(i);
+          let cgx = Math.round(moments.m10 / moments.m00);
+          let cgy = Math.round(moments.m01 / moments.m00);
+          big.drawContour(contours, i, GREEN, thickness, lineType, maxLevel, [0, 0]);
+          big.line([cgx - 5, cgy], [cgx + 5, cgy], RED);
+          big.line([cgx, cgy - 5], [cgx, cgy + 5], RED);
+        }
+      }
+
+      //console.log(outSheet.col(1));
+
+
+      //window.show(big);
+
+    window.blockingWaitKey(0, 522000);
   });
-  }, frameRate);
+  //}, frameRate);

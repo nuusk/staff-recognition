@@ -9,6 +9,7 @@
   "author": "poe",
   "license": "ISC",
   "dependencies": {
+    "console.table": "^0.9.1",
     "opencv": "github:peterbraden/node-opencv"
   }
 }
