@@ -101,7 +101,7 @@ const window = new cv.NamedWindow('Video', 0)
       //outSheet.erode(1, staffKernel);
       //outSheet.dilate(1, staffKernel);
 
-      let barKernel = cv.imgproc.getStructuringElement(1, [barKernelHeight, 1]);
+      /*let barKernel = cv.imgproc.getStructuringElement(1, [barKernelHeight, 1]);
 
       //console.log(barKernel.col(1));
 
@@ -110,6 +110,7 @@ const window = new cv.NamedWindow('Video', 0)
       outSheet.dilate(1, barKernel);
       outSheet.erode(1, barKernel);
       outSheet.dilate(1, barKernel);
+      */
 
       //inverse the output so that notes are black and the paper is white
       outSheet.bitwiseNot(outSheet);
@@ -120,7 +121,7 @@ const window = new cv.NamedWindow('Video', 0)
 
 
       outNotes = outSheet.clone();
-      let notesKernel = cv.imgproc.getStructuringElement(1, [5, 5]);
+      let notesKernel = cv.imgproc.getStructuringElement(1, [7, 7]);
       //console.log(notesKernel);
 
       outNotes.canny(0, 100);
@@ -136,19 +137,21 @@ const window = new cv.NamedWindow('Video', 0)
       for(i = 0; i < notesContours.size(); i++) {
         if(notesContours.area(i) > 235 && notesContours.area(i) < 300) {
           //WE NEED TO FIND VALUES INSTEAD OF 235 AND 300!!!!!!!!
-          
+
           let moments = notesContours.moments(i);
-          let cgx = Math.round(moments.m10 / moments.m00);
-          let cgy = Math.round(moments.m01 / moments.m00);
-          big.drawContour(notesContours, i, GREEN, thickness, lineType, maxLevel, [0, 0]);
-          big.line([cgx - 5, cgy], [cgx + 5, cgy], RED);
-          big.line([cgx, cgy - 5], [cgx, cgy + 5], RED);
+          let centerX = Math.round(moments.m10 / moments.m00);
+          let centerY = Math.round(moments.m01 / moments.m00);
+          big.drawContour(notesContours, i, RED, thickness, lineType, maxLevel, [0, 0]);
+          big.line([centerX - 2, centerY], [centerX + 2, centerY], WHITE);
+          big.line([centerX, centerY - 2], [centerX, centerY + 2], WHITE);
         }
       }
 
       //console.log(outSheet.col(1));
-
-      window.show(big);
+      big.save('./output/contours.png');
+      console.log('Saved contours to contours.png');
+      outSheet.save('./output/outSheet.png');
+      console.log('Saved notes without the staff to outSheet.png')
 
     window.blockingWaitKey(0, 522000);
   });
