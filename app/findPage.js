@@ -1,5 +1,5 @@
-var cv = require('opencv');
-var BLUR = 11;
+const cv = require('opencv');
+const BLUR = 11;
 const LOW_THRESH = 0;
 const HIGH_THRESH = 150;
 const DILATE_ITERATION_NUM = 2;
