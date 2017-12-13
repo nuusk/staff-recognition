@@ -39,7 +39,7 @@ let notesKernel = cv.imgproc.getStructuringElement(1, [7, 7]);
 const window = new cv.NamedWindow('Video', 0)
 
 //iterator is used to iterate through all parts of the sheet
-//the program runs for each row and finds notes in order to play them 
+//the program runs for each row and finds notes in order to play them
 let iterator = 0;
 function findAndDrawNotes(image) {
   //we need single channel image to apply threshhold
@@ -64,15 +64,15 @@ function findAndDrawNotes(image) {
 
   //morphological operations with created kernel
 
-  //first we erode with staff kernel to get rid of horizontal lines
+  // first we erode with staff kernel to get rid of horizontal lines
   outSheet.erode(1, staffKernel);
-  //the following dilatation is applied to make sure that none of the notes disappear
+  // the following dilatation is applied to make sure that none of the notes disappear
   outSheet.dilate(2, staffKernel);
   //next we erode with bar kernel to get rid of vertical lines
   outSheet.erode(1, barKernel);
   //dilatation with vertical lines will keep notes from disappearing
   outSheet.dilate(2, barKernel);
-  //inverse the output so that notes are black and the paper is white
+  // inverse the output so that notes are black and the paper is white
   outSheet.bitwiseNot(outSheet);
 
   //clone the outSheet matrix
@@ -116,7 +116,7 @@ function findAndDrawNotes(image) {
 let frames = [];
 
 //setInterval( () => {
-  cv.readImage('img/doramon.jpg', (err, frame) => {
+    cv.readImage('img/healing.jpg', (err, frame) => {
     let points;
     if (err) {
       throw err;
@@ -162,6 +162,7 @@ let frames = [];
           contours.point(i, 3)
         ]
 
+
         // frame.line([points[0].x,points[0].y], [points[1].x, points[1].y], RED);
         // frame.line([points[1].x,points[1].y], [points[2].x, points[2].y], RED);
         // frame.line([points[2].x,points[2].y], [points[3].x, points[3].y], RED);
@@ -172,22 +173,68 @@ let frames = [];
         // console.log('{' + i + '} - points[2].x : '+ points[2].x + '. ');// ,points[2].y], [points[3].x, points[3].y]);
         // console.log('{' + i + '} - points[3].x : '+ points[3].x + '. ');// ,points[3].y], [points[0].x, points[0].y]);
 
+        let topLeftPoint = {};
+        let topRightPoint = {};
+        let downLeftPoint = {};
+        let downRightPoint = {};
 
-        const staffHeight = points[2].y - points[0].y;
-        const staffWidth = points[2].x - points[0].x;
+        topLeftPoint.x = points[0].x;
+        topRightPoint.x = points[0].x;
+        downLeftPoint.x = points[0].x;
+        downRightPoint.x = points[0].x;
+        topLeftPoint.y = points[0].y;
+        topRightPoint.y = points[0].y;
+        downLeftPoint.y = points[0].y;
+        downRightPoint.y = points[0].y;
+
+        for(let j=0; j<4; j++) {
+          if (points[j].x < topLeftPoint.x && points[j].y > topLeftPoint.y) {
+            topLeftPoint.x = points[j].x;
+            topLeftPoint.y = points[j].y;
+          }
+          if (points[j].x < downLeftPoint.x && points[j].y < downLeftPoint.y) {
+            downLeftPoint.x = points[j].x;
+            downLeftPoint.y = points[j].y;
+          }
+          if (points[j].x > topRightPoint.x && points[j].y > topRightPoint.y) {
+            topRightPoint.x = points[j].x;
+            topRightPoint.y = points[j].y;
+          }
+          if (points[j].x > downRightPoint.x && points[j].y < downRightPoint.y) {
+            downRightPoint.x = points[j].x;
+            downRightPoint.y = points[j].y;
+          }
+        }
+
+        const staffHeight = Math.abs(topLeftPoint.y - topRightPoint.y);
+        const staffWidth = Math.abs(topLeftPoint.x - downLeftPoint.x);
         const widthRatio = staffWidth / originalWidth;
         //offset that is addesd to the staff height to make sure that notes are not cut off
         const heightOffset = staffHeight/5;
         //the difference between two lines on the sheet
         const lineDifference = staffHeight*5/6;
+        // console.log('staffHeight: ' + staffHeight);
+        // console.log('staffWidth: ' + staffWidth);
+        // console.log('widthRatio: ' + widthRatio);
+        // console.log('heightOffset: ' + heightOffset);
+        // console.log('lineDifference: ' + lineDifference);
+        // console.log('~`~`~`~`');
+        console.log('topLeftPoint: ' + topLeftPoint.x + ', ' + topLeftPoint.y);
+        console.log('downLeftPoint: ' + downLeftPoint.x + ', ' + downLeftPoint.y);
+        console.log('topRightPoint: ' + topRightPoint.x + ', ' + topRightPoint.y);
+        console.log('downRightPoint: ' + downRightPoint.x + ', ' + downRightPoint.y);
+
+
+
 
         let sourceImage = [0, 0, 0, staffHeight+2*heightOffset, staffWidth, staffHeight+2*heightOffset, staffWidth, 0];
-        let destinationImage = [points[0].x, points[0].y-heightOffset, points[3].x, points[3].y+heightOffset, points[2].x, points[2].y+heightOffset, points[1].x, points[1].y-heightOffset];
+        let destinationImage = [topLeftPoint.x, topLeftPoint.y-heightOffset, downLeftPoint.x, downLeftPoint.y+heightOffset, downRightPoint.x, downRightPoint.y+heightOffset, topRightPoint.x, topRightPoint.y-heightOffset];
         let xfrmMat = frame.getPerspectiveTransform(destinationImage,sourceImage);
         let tmpFrame = frame.copy();
         tmpFrame.warpPerspective(xfrmMat, staffWidth, staffHeight+2*heightOffset, [255, 255, 255]);
         tmpFrame.save(i + '.png');
         frames.push(tmpFrame);
+
       }
 
       frames.forEach(findAndDrawNotes);
