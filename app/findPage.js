@@ -16,14 +16,12 @@ function find_page (im_orginal) {
     im.medianBlur(BLUR);
 
     // find squares in every color plane of the image (B,G,R) TODO
-
     im_transformed = im.copy();
     im_transformed.convertGrayscale();
     im_transformed.canny(LOW_THRESH, HIGH_THRESH);
     im_transformed.dilate(DILATE_ITERATION_NUM);
 
     contours = im_transformed.findContours();
-
 
     //find biggest countour
     let largestContourImg;
@@ -37,22 +35,18 @@ function find_page (im_orginal) {
       }
     }
 
-
     im_contour = im_orginal.copy();
     im_contour.drawAllContours(contours, RED,5);
     im_contour.save('output/all.png');
 
-
     //find approximated polygon
     contours.approxPolyDP(largestAreaIndex, contours.arcLength(largestAreaIndex, true) * SQUARE_APPROX, true);
-
 
     im_contour = im_orginal.copy();
     im_contour.drawContour(contours, largestAreaIndex, RED,5);
     im_contour.save('output/polygon.png');
 
 
-    //
     var width = im_orginal.width();
     var height = im_orginal.height();
     points_sq = contours.points(largestAreaIndex);
