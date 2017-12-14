@@ -15,7 +15,7 @@ module.exports = {
     return dist;
   },
 
-  dstArrayGen: function(points_sq,height, width) {
+  dstArrayGen: function(points_sq, height, width) {
     newPoints = [0,0,0,0];
     best = 0;
     for (let j = 1 ; j< 4; j++) {
@@ -27,7 +27,6 @@ module.exports = {
     newPoints[1] = (best+1)%4;
     newPoints[2] = (best+2)%4;
     newPoints[3] = (best+3)%4;
-
     //console.log(newPoints);
     //console.log(points_sq);
 
@@ -81,10 +80,10 @@ module.exports = {
 
 
       //
-      var width =im_orginal.width();
-      var height = im_orginal.height();
+      var width =math.min(im_orginal.width(),im_orginal.height());
+      var height = math.max(im_orginal.width(),im_orginal.height());
       points_sq = contours.points(largestAreaIndex);
-      //console.log(Math.size(points_sq)>3);
+      //console.log(math.size(points_sq)>3);
       if(math.size(points_sq)>3){
         var srcArray = [0, 0, 0, height, width, height,width, 0];
         var dstArray = dstArrayGen(points_sq,height, width);

@@ -103,12 +103,18 @@ function findAndDrawNotes(image) {
   // let maxArea = ellipseArea*(1+measurementError);
   // let minArea = ellipseArea*(1-measurementError);
   //magic number, found experimentally
-  let maxArea = image.width()*image.height()/180;
-  let minArea = image.width()*image.height()/277;
+  let maxNote = image.width()*image.height()/180;
+  let minNote = image.width()*image.height()/270;
   let big = new cv.Matrix(outNotes.size()[0], outNotes.size()[1]);
+  let firstLine = image.height()/6;
+  console.log(`~~Row ${iterator}~~`);
+  console.log(`first line: ${firstLine}`);
+  console.log(`second line: ${firstLine*2}`);
+  console.log(`thid line: ${firstLine*3}`);
+  console.log(`fourth line: ${firstLine*4}`);
+  console.log(`fifth line: ${firstLine*5}`);
   for(i = 0; i < notesContours.size(); i++) {
-    if(notesContours.area(i) > minArea && notesContours.area(i) < maxArea) {
-      //WE NEED TO FIND VALUES INSTEAD OF 235 AND 300!!!!!!!!
+    if(notesContours.area(i) > minNote && notesContours.area(i) < maxNote) {
       let moments = notesContours.moments(i);
       let centerX = Math.round(moments.m10 / moments.m00);
       let centerY = Math.round(moments.m01 / moments.m00);
@@ -116,6 +122,8 @@ function findAndDrawNotes(image) {
       big.drawContour(notesContours, i, RED, thickness, lineType, maxLevel, [0, 0]);
       big.line([centerX - 2, centerY], [centerX + 2, centerY], WHITE);
       big.line([centerX, centerY - 2], [centerX, centerY + 2], WHITE);
+
+      console.log(`Found a note: [${centerX}][${centerY}]`);
     }
   }
 
@@ -142,9 +150,8 @@ let frames = [];
     }
       if (option == '--find') {
         frame = view.findPage(frame);
-
       }
-
+      
       let originalWidth = frame.width();
       let originalHeight = frame.height();
       //outedges is the sheet without the notes (only the staff)
@@ -152,7 +159,7 @@ let frames = [];
       //change grey to black
       // outEdges.dilate(1, barKernel);
       frame = frame.adaptiveThreshold(255, 1, 0, 235, adaptiveConstant);
-      frame.gaussianBlur([7,7])
+      // frame.gaussianBlur([7,7])
 
       frame.save('how.png');
       let outEdges = frame.clone();
@@ -168,7 +175,7 @@ let frames = [];
       contours = outEdges.findContours();
 
       let maxArea = originalWidth*originalHeight;
-      let minArea = 5;
+      let minArea = 20000;
 
       //for each contours array, draw the rectangle corresponding to it
       for (i = 0; i < contours.size(); i++) {
