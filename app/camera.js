@@ -1,5 +1,9 @@
 const cv = require('opencv');
+const midi = require('midi');
 require('console.table');
+const sheet = process.argv[2];
+const option = process.argv[3];
+const view = require('./findPage');
 
 const frameRate = 20;
 const lowThresh = 40;
@@ -7,8 +11,8 @@ const highThresh = 60;
 const nDilIters = 2;
 const nErodIters = 2;
 
-const minArea = 2000;
-const maxArea = 10000000000;
+// const minArea = 2000;
+// const maxArea = 10000000000;
 const SQUARE_APPROX = 0.005;
 
 //colors (B, G, R)!!!
@@ -19,7 +23,7 @@ const WHITE = [255, 255, 255];
 
 let contours;
 const adaptiveBlockSize = 13;
-const adaptiveConstant = 2;
+const adaptiveConstant = 10;
 const verticalKernelReduction = 195;
 const staffKernelWidth = 7;
 const barKernelHeight = 5;
@@ -40,10 +44,11 @@ const window = new cv.NamedWindow('Video', 0)
 
 //iterator is used to iterate through all parts of the sheet
 //the program runs for each row and finds notes in order to play them
+let lineDifference;
 let iterator = 0;
 function findAndDrawNotes(image) {
   //we need single channel image to apply threshhold
-  image.cvtColor('CV_BGR2GRAY');
+  // image.cvtColor('CV_BGR2GRAY');
 
   //get the threshholded image
   //255 is the max value that pixels are set to if the conditions are satisfied
@@ -72,6 +77,7 @@ function findAndDrawNotes(image) {
   outSheet.erode(1, barKernel);
   //dilatation with vertical lines will keep notes from disappearing
   outSheet.dilate(2, barKernel);
+  // outSheet.dilate(1, baseKernel);
   // inverse the output so that notes are black and the paper is white
   outSheet.bitwiseNot(outSheet);
 
@@ -89,14 +95,24 @@ function findAndDrawNotes(image) {
   const lineType = 8;
   const maxLevel = 2;
   const thickness = 2;
+  // console.log(image.width());
+  // console.log(image.height());
+  // const measurementError = 0.8;
+  // let ellipseArea = Math.PI*lineDifference*lineDifference*5/3;
+  // console.log(ellipseArea);
+  // let maxArea = ellipseArea*(1+measurementError);
+  // let minArea = ellipseArea*(1-measurementError);
+  //magic number, found experimentally
+  let maxArea = image.width()*image.height()/180;
+  let minArea = image.width()*image.height()/277;
   let big = new cv.Matrix(outNotes.size()[0], outNotes.size()[1]);
   for(i = 0; i < notesContours.size(); i++) {
-    if(notesContours.area(i) > 150 && notesContours.area(i) < 460) {
+    if(notesContours.area(i) > minArea && notesContours.area(i) < maxArea) {
       //WE NEED TO FIND VALUES INSTEAD OF 235 AND 300!!!!!!!!
       let moments = notesContours.moments(i);
       let centerX = Math.round(moments.m10 / moments.m00);
       let centerY = Math.round(moments.m01 / moments.m00);
-      console.log('Center of the note: [' + centerX + '][' + centerY + '].');
+      // console.log('Center of the note: [' + centerX + '][' + centerY + '].');
       big.drawContour(notesContours, i, RED, thickness, lineType, maxLevel, [0, 0]);
       big.line([centerX - 2, centerY], [centerX + 2, centerY], WHITE);
       big.line([centerX, centerY - 2], [centerX, centerY + 2], WHITE);
@@ -104,9 +120,9 @@ function findAndDrawNotes(image) {
   }
 
   //console.log(outSheet.col(1));
-  big.save('./con['+iterator+'].png');
+  big.save('./intermediary/con['+iterator+'].png');
   // console.log('Saved contours to output/contours.png');
-  outSheet.save('./sheet['+iterator+'].png');
+  outSheet.save('./intermediary/sheet['+iterator+'].png');
   // console.log('Saved notes without the staff to output/outSheet.png')
   //frame.save('./output/frame.png');
   //console.log('Saved staff frames to output/frame.png')
@@ -116,7 +132,7 @@ function findAndDrawNotes(image) {
 let frames = [];
 
 //setInterval( () => {
-    cv.readImage('img/doramon.jpg', (err, frame) => {
+    cv.readImage('img/' + sheet, (err, frame) => {
     let points;
     if (err) {
       throw err;
@@ -124,23 +140,35 @@ let frames = [];
     if (frame.width() < 1 || frame.height() < 1) {
       throw new Error('Image has no size');
     }
+      if (option == '--find') {
+        frame = view.findPage(frame);
+
+      }
+
       let originalWidth = frame.width();
       let originalHeight = frame.height();
       //outedges is the sheet without the notes (only the staff)
+      frame.convertGrayscale();
+      //change grey to black
+      // outEdges.dilate(1, barKernel);
+      frame = frame.adaptiveThreshold(255, 1, 0, 235, adaptiveConstant);
+      frame.gaussianBlur([7,7])
+
+      frame.save('how.png');
       let outEdges = frame.clone();
-
-      outEdges.convertGrayscale();
-
+      outEdges.erode(1, staffKernel);
       //morphological operations with created kernel
       outEdges.dilate(17, barKernel);
       outEdges.erode(2, baseKernel);
-      //change grey to black
-      outEdges = outEdges.adaptiveThreshold(255, 1, 0, 205, adaptiveConstant);
+      outEdges = outEdges.adaptiveThreshold(255, 1, 0, 235, adaptiveConstant);
 
       outEdges.save('outEdges.png');
 
       //now we have the rectangles contours (array of contours)
       contours = outEdges.findContours();
+
+      let maxArea = originalWidth*originalHeight;
+      let minArea = 5;
 
       //for each contours array, draw the rectangle corresponding to it
       for (i = 0; i < contours.size(); i++) {
@@ -153,7 +181,7 @@ let frames = [];
         contours.approxPolyDP(i, contours.arcLength(i, true) * SQUARE_APPROX, true);
 
         //we have to filter those polygons that aren't rectangles
-        if (contours.cornerCount(i) != 4) continue;
+        // if (contours.cornerCount(i) != 4) continue;
 
         points = [
           contours.point(i, 0),
@@ -161,7 +189,6 @@ let frames = [];
           contours.point(i, 2),
           contours.point(i, 3)
         ]
-
 
         // frame.line([points[0].x,points[0].y], [points[1].x, points[1].y], RED);
         // frame.line([points[1].x,points[1].y], [points[2].x, points[2].y], RED);
@@ -212,17 +239,17 @@ let frames = [];
         //offset that is addesd to the staff height to make sure that notes are not cut off
         const heightOffset = staffHeight/5;
         //the difference between two lines on the sheet
-        const lineDifference = staffHeight*5/6;
+        lineDifference = staffHeight*5/6;
         // console.log('staffHeight: ' + staffHeight);
         // console.log('staffWidth: ' + staffWidth);
         // console.log('widthRatio: ' + widthRatio);
         // console.log('heightOffset: ' + heightOffset);
         // console.log('lineDifference: ' + lineDifference);
         // console.log('~`~`~`~`');
-        console.log('tl: ' + tl.x + ', ' + tl.y);
-        console.log('dl: ' + dl.x + ', ' + dl.y);
-        console.log('tr: ' + tr.x + ', ' + tr.y);
-        console.log('dr: ' + dr.x + ', ' + dr.y);
+        // console.log('tl: ' + tl.x + ', ' + tl.y);
+        // console.log('dl: ' + dl.x + ', ' + dl.y);
+        // console.log('tr: ' + tr.x + ', ' + tr.y);
+        // console.log('dr: ' + dr.x + ', ' + dr.y);
 
         let sourceImage = [0, 0, 0, staffHeight, staffWidth, staffHeight, staffWidth, 0];
         let destinationImage = [
@@ -234,7 +261,7 @@ let frames = [];
         let xfrmMat = frame.getPerspectiveTransform(destinationImage,sourceImage);
         let tmpFrame = frame.copy();
         tmpFrame.warpPerspective(xfrmMat, staffWidth, staffHeight+2*heightOffset, [255, 255, 255]);
-        tmpFrame.save(i + '.png');
+        tmpFrame.save('./intermediary/' + i + '.png');
         frames.push(tmpFrame);
       }
 

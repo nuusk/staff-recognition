@@ -10,6 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "console.table": "^0.9.1",
+    "mathjs": "^3.17.0",
+    "midi": "^0.9.5",
     "opencv": "github:peterbraden/node-opencv"
   }
 }
