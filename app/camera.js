@@ -91,7 +91,7 @@ function findAndDrawNotes(image) {
   const thickness = 2;
   let big = new cv.Matrix(outNotes.size()[0], outNotes.size()[1]);
   for(i = 0; i < notesContours.size(); i++) {
-    if(notesContours.area(i) > 235 && notesContours.area(i) < 300) {
+    if(notesContours.area(i) > 150 && notesContours.area(i) < 460) {
       //WE NEED TO FIND VALUES INSTEAD OF 235 AND 300!!!!!!!!
       let moments = notesContours.moments(i);
       let centerX = Math.round(moments.m10 / moments.m00);
@@ -116,7 +116,7 @@ function findAndDrawNotes(image) {
 let frames = [];
 
 //setInterval( () => {
-    cv.readImage('img/healing.jpg', (err, frame) => {
+    cv.readImage('img/doramon.jpg', (err, frame) => {
     let points;
     if (err) {
       throw err;
@@ -173,41 +173,41 @@ let frames = [];
         // console.log('{' + i + '} - points[2].x : '+ points[2].x + '. ');// ,points[2].y], [points[3].x, points[3].y]);
         // console.log('{' + i + '} - points[3].x : '+ points[3].x + '. ');// ,points[3].y], [points[0].x, points[0].y]);
 
-        let topLeftPoint = {};
-        let topRightPoint = {};
-        let downLeftPoint = {};
-        let downRightPoint = {};
+        let tl = {};
+        let tr = {};
+        let dl = {};
+        let dr = {};
 
-        topLeftPoint.x = points[0].x;
-        topRightPoint.x = points[0].x;
-        downLeftPoint.x = points[0].x;
-        downRightPoint.x = points[0].x;
-        topLeftPoint.y = points[0].y;
-        topRightPoint.y = points[0].y;
-        downLeftPoint.y = points[0].y;
-        downRightPoint.y = points[0].y;
+        tl.x = points[0].x;
+        tr.x = points[0].x;
+        dl.x = points[0].x;
+        dr.x = points[0].x;
+        tl.y = points[0].y;
+        tr.y = points[0].y;
+        dl.y = points[0].y;
+        dr.y = points[0].y;
 
         for(let j=0; j<4; j++) {
-          if (points[j].x < topLeftPoint.x && points[j].y > topLeftPoint.y) {
-            topLeftPoint.x = points[j].x;
-            topLeftPoint.y = points[j].y;
+          if (points[j].x < tl.x || points[j].x < dl.x) {
+            tl.x = points[j].x;
+            dl.x = points[j].x;
           }
-          if (points[j].x < downLeftPoint.x && points[j].y < downLeftPoint.y) {
-            downLeftPoint.x = points[j].x;
-            downLeftPoint.y = points[j].y;
+          if (points[j].x > tr.x || points[j].x > dr.x) {
+            tr.x = points[j].x;
+            dr.x = points[j].x;
           }
-          if (points[j].x > topRightPoint.x && points[j].y > topRightPoint.y) {
-            topRightPoint.x = points[j].x;
-            topRightPoint.y = points[j].y;
+          if (points[j].y < dl.y && points[j].y < dr.y) {
+            dl.y = points[j].y;
+            dr.y = points[j].y;
           }
-          if (points[j].x > downRightPoint.x && points[j].y < downRightPoint.y) {
-            downRightPoint.x = points[j].x;
-            downRightPoint.y = points[j].y;
+          if (points[j].y > tl.y && points[j].y > tr.y) {
+            tl.y = points[j].y;
+            tr.y = points[j].y;
           }
         }
 
-        const staffHeight = Math.abs(topLeftPoint.y - topRightPoint.y);
-        const staffWidth = Math.abs(topLeftPoint.x - downLeftPoint.x);
+        const staffHeight = Math.abs(tl.y - dl.y);
+        const staffWidth = Math.abs(tl.x - tr.x);
         const widthRatio = staffWidth / originalWidth;
         //offset that is addesd to the staff height to make sure that notes are not cut off
         const heightOffset = staffHeight/5;
@@ -219,22 +219,23 @@ let frames = [];
         // console.log('heightOffset: ' + heightOffset);
         // console.log('lineDifference: ' + lineDifference);
         // console.log('~`~`~`~`');
-        console.log('topLeftPoint: ' + topLeftPoint.x + ', ' + topLeftPoint.y);
-        console.log('downLeftPoint: ' + downLeftPoint.x + ', ' + downLeftPoint.y);
-        console.log('topRightPoint: ' + topRightPoint.x + ', ' + topRightPoint.y);
-        console.log('downRightPoint: ' + downRightPoint.x + ', ' + downRightPoint.y);
+        console.log('tl: ' + tl.x + ', ' + tl.y);
+        console.log('dl: ' + dl.x + ', ' + dl.y);
+        console.log('tr: ' + tr.x + ', ' + tr.y);
+        console.log('dr: ' + dr.x + ', ' + dr.y);
 
-
-
-
-        let sourceImage = [0, 0, 0, staffHeight+2*heightOffset, staffWidth, staffHeight+2*heightOffset, staffWidth, 0];
-        let destinationImage = [topLeftPoint.x, topLeftPoint.y-heightOffset, downLeftPoint.x, downLeftPoint.y+heightOffset, downRightPoint.x, downRightPoint.y+heightOffset, topRightPoint.x, topRightPoint.y-heightOffset];
+        let sourceImage = [0, 0, 0, staffHeight, staffWidth, staffHeight, staffWidth, 0];
+        let destinationImage = [
+          dl.x, dl.y+heightOffset,
+          tl.x, tl.y-heightOffset,
+          tr.x, tr.y-heightOffset,
+          dr.x, dr.y+heightOffset
+        ];
         let xfrmMat = frame.getPerspectiveTransform(destinationImage,sourceImage);
         let tmpFrame = frame.copy();
         tmpFrame.warpPerspective(xfrmMat, staffWidth, staffHeight+2*heightOffset, [255, 255, 255]);
         tmpFrame.save(i + '.png');
         frames.push(tmpFrame);
-
       }
 
       frames.forEach(findAndDrawNotes);
